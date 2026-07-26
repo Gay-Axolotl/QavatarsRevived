@@ -12,13 +12,18 @@
   "dependencies": [
     {
       "id": "scotland2",
-      "versionRange": "^0.1.5",
+      "versionRange": "^0.1.6",
       "downloadIfMissing": "https://github.com/sc2ad/scotland2/releases/latest/download/scotland2.qmod"
     },
     {
-      "id": "song-control",
-      "versionRange": "^0.1.0",
-      "downloadIfMissing": "https://github.com/Fernthedev/song-control/releases/latest/download/song-control.qmod"
+      "id": "custom-types",
+      "versionRange": "^0.18.3",
+      "downloadIfMissing": "https://github.com/QuestPackageManager/Il2CppQuestTypePatching/releases/download/v0.18.3/CustomTypes.qmod"
+    },
+    {
+      "id": "paper2_scotland2",
+      "versionRange": "^4.6.4",
+      "downloadIfMissing": "https://github.com/Fernthedev/paperlog/releases/download/v4.6.4/paper2_scotland2.qmod"
     }
   ],
   "modFiles": [

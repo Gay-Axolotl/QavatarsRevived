@@ -16,15 +16,24 @@ produces an empty `.so` / `.qmod`, and nothing more.
 - [ ] Replay-mode support
 - [ ] Testing on-device
 
-**Important:** dependency versions in `qpm.json` (`beatsaber-hook`,
-`bs-cordl`, `custom-types`, `paper2_scotland2`, `scotland2`, `song-control`)
-are best-guess placeholders and have **not** been verified against the live
-QPM registry. Run `qpm restore` and expect to bump versions before this
-builds cleanly.
+**Dependency versions:** the core toolchain deps (`beatsaber-hook ^6.4.2`,
+`bs-cordl ^4008.*`, `custom-types ^0.18.3`, `scotland2 ^0.1.6`,
+`paper2_scotland2 ^4.6.4`) are cross-checked against
+[hardcpp/QBeatSaberPlus-GameTweaker](https://github.com/hardcpp/QBeatSaberPlus-GameTweaker),
+an actively maintained mod whose v6.4.1 release explicitly targets game
+version 1.40.8. These should be correct as of when this was written, but
+still run `qpm restore` and expect drift over time.
+
+VRM-specific libraries this mod will eventually need (VRM/glTF parsing,
+skeleton math, UI) — likely `assimp`, `bsml`, `fmt`, `sombrero`,
+`rapidjson-macros` based on the original VRM-Qavatars mod's dependency
+list — are **not yet added**, since the versions seen for that mod predate
+1.40.8 and haven't been re-verified. Add these with checked-current versions
+once avatar loading is actually being implemented, not before.
 
 ## Build
 
-Requires: Android NDK (r26d used in CI), Ninja, QPM CLI, CMake ≥ 3.21.
+Requires: Android NDK (r27, per the pinned `ndk` field), Ninja, QPM CLI, CMake ≥ 3.21.
 
 ```sh
 qpm restore

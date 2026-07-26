@@ -27,6 +27,7 @@
         "qpm qmod build"
       ]
     },
+    "ndk": "^27.2.12479018",
     "qmodIncludeDirs": [],
     "qmodIncludeFiles": [],
     "qmodOutput": null
@@ -34,36 +35,30 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^6.4.0",
+      "versionRange": "^6.4.2",
       "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^3600.0.0",
-      "additionalData": {
-        "includeQmod": false
-      }
-    },
-    {
-      "id": "custom-types",
-      "versionRange": "^0.17.0",
+      "versionRange": "^4008.*",
       "additionalData": {}
     },
     {
-      "id": "paper2_scotland2",
-      "versionRange": "^4.4.0",
+      "id": "custom-types",
+      "versionRange": "^0.18.3",
       "additionalData": {}
     },
     {
       "id": "scotland2",
-      "versionRange": "^0.1.5",
+      "versionRange": "^0.1.6",
       "additionalData": {
-        "includeQmod": false
+        "includeQmod": false,
+        "private": true
       }
     },
     {
-      "id": "song-control",
-      "versionRange": "^0.1.0",
+      "id": "paper2_scotland2",
+      "versionRange": "^4.6.4",
       "additionalData": {}
     }
   ],
