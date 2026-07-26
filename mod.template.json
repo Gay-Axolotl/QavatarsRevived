@@ -1,0 +1,30 @@
+{
+  "_QPVersion": "0.1.2",
+  "name": "Qavatars Revived",
+  "id": "QavatarsRevived",
+  "author": "YOUR_NAME",
+  "porter": "",
+  "version": "0.1.0",
+  "packageId": "com.beatgames.beatsaber",
+  "packageVersion": "1.40.8",
+  "description": "Custom avatar (VRM) support for Beat Saber, rebuilt from scratch for 1.40.8. ${mod.description}",
+  "coverImage": "cover.png",
+  "dependencies": [
+    {
+      "id": "scotland2",
+      "versionRange": "^0.1.5",
+      "downloadIfMissing": "https://github.com/sc2ad/scotland2/releases/latest/download/scotland2.qmod"
+    },
+    {
+      "id": "song-control",
+      "versionRange": "^0.1.0",
+      "downloadIfMissing": "https://github.com/Fernthedev/song-control/releases/latest/download/song-control.qmod"
+    }
+  ],
+  "modFiles": [
+    "libqavatarsrevived.so"
+  ],
+  "libraryFiles": [],
+  "fileCopies": [],
+  "copyExtensions": []
+}
