@@ -38,7 +38,7 @@ jobs:
         uses: Fernthedev/qpm-action@v1
         with:
           restore: true
-          cache: true
+          cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Read mod version
