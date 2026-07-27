@@ -13,20 +13,33 @@
 
 #include "AssetLib/generators/meshGenerator.hpp"
 #include "AssetLib/generators/intermediateMeshGenerator.hpp"
+#include "AssetLib/generators/textureGenerator.hpp"
+#include "AssetLib/generators/materialGenerator.hpp"
+
+#include "MaterialTracker.hpp"
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
 #include "json.hpp"
 
+namespace AssetLib
+{
+    SafePtrUnity<UnityEngine::Shader> ModelImporter::mtoon;
+}
+
 // NOTE ON THIS FILE: this is a reduced port of VRM-Qavatars\' modelImporter.cpp.
 // It keeps the node-tree/armature/mesh-building pipeline close to the original
-// (tested, working logic -- minimal changes only), but the tail end of the
-// original LoadVRM() -- material generation, humanoid Avatar/skeleton mapping,
-// VRIK setup, springbone generation, first/third-person mesh splitting -- is
-// cut. Those land in follow-up passes once their own subsystems are ported.
-// What DOES work after this file: loading a VRM\'s node tree, armature, real
-// Unity meshes (with blendshapes/bone weights), and the parsed VRM0/VRM1
-// extension JSON + blendshape master, all attached to VRMModelContext.
+// (tested, working logic -- minimal changes only). Material/texture generation
+// is now wired in too (see the end of LoadVRM below), but humanoid Avatar/
+// skeleton mapping, VRIK setup, springbone generation, and first/third-person
+// mesh splitting are still cut -- those land in follow-up passes once their
+// own subsystems are ported. What DOES work after this file: loading a VRM\'s
+// node tree, armature, real Unity meshes (with blendshapes/bone weights),
+// parsed VRM0/VRM1 extension JSON + blendshape master, and (once
+// ShaderLoader has finished loading the mToon shader bundle) real VRM0
+// materials assigned to renderers -- VRM1 material generation is a stub in
+// the original mod itself, not something cut by this port; see
+// MaterialGenerator::Generate<VRMC_VRM_1_0::Vrm>.
 
 namespace AssetLib
 {
@@ -283,18 +296,110 @@ namespace AssetLib
                 ? Structure::VRM::VRMBlendShapeMaster::LoadFromVRM0(vrm.value())
                 : (vrm1.has_value() ? Structure::VRM::VRMBlendShapeMaster::LoadFromVRM1(vrm1.value()) : nullptr);
 
+            // Decode embedded image buffers (glTF images/bufferViews reference
+            // byte ranges inside the same binary chunk the JSON came from).
+            auto images = doc["images"];
+            auto bufferViews = doc["bufferViews"];
+
+            auto* textures = new ArrayW<uint8_t>[images.size()];
+            for (int i = 0; i < images.size(); i++)
+            {
+                auto img = images[i];
+                auto bufferView = bufferViews[img["bufferView"].get<uint32_t>()];
+
+                const uint32_t size = bufferView["byteLength"].get<uint32_t>();
+                const uint32_t start = bufferView["byteOffset"].get<uint32_t>();
+                std::string thing;
+                thing.resize(size);
+                binFile.seekg(28 + jsonLength + start);
+                binFile.read(thing.data(), size);
+
+                const auto data = thing.data();
+                auto ret = ArrayW<uint8_t>(thing.size());
+                for (size_t x = 0; x < thing.size(); x++)
+                {
+                    ret[x] = data[x];
+                }
+
+                textures[i] = ret;
+            }
+
+            bool finishedMaterials = false;
+            BSML::MainThreadScheduler::Schedule([modelContext, images, vrm, textures, &finishedMaterials](){
+                VRMLogger.info("Generating textures/materials on mainthread...");
+
+                // ShaderLoader::LoadBund() must have finished before this runs,
+                // or ModelImporter::mtoon.ptr() will still be null and every
+                // generated Material will silently use a null shader. Start
+                // that coroutine once, early, at mod init (see AvatarLoader).
+                auto textureGenerator = Generators::TextureGenerator();
+                UnityEngine::Texture2D** unityTextures = textureGenerator.Generate(textures, images.size());
+
+                delete[] textures;
+
+                std::vector<UnityEngine::Material*> materials;
+                VRMQavatars::MaterialTracker::materials.clear();
+
+                auto materialGenerator = Generators::MaterialGenerator();
+                if (vrm.has_value())
+                {
+                    for (size_t i = 0; i < vrm.value().materialProperties.size(); i++)
+                    {
+                        auto mat = materialGenerator.Generate(vrm.value(), i, unityTextures);
+                        materials.push_back(mat);
+                        VRMQavatars::MaterialTracker::materials.push_back(mat);
+                    }
+                }
+                // NOTE: VRM1-only files (vrm.has_value() == false) get an empty
+                // materials list here -- MaterialGenerator\'s VRM1 overload is a
+                // stub upstream (see materialGenerator.cpp), so there is nothing
+                // real to generate yet. Meshes will render with Unity\'s default
+                // material until that\'s implemented.
+                VRMQavatars::MaterialTracker::UpdateMaterials();
+
+                for (size_t i = 0; i < modelContext->nodes.size(); i++)
+                {
+                    if(auto node = modelContext->nodes[i]; node->mesh.has_value() && node->processed && !materials.empty())
+                    {
+                        auto mesh = node->mesh.value();
+                        auto matArray = ArrayW<UnityEngine::Material*>(mesh.materialIdxs.size());
+                        for (size_t k = 0; k < mesh.materialIdxs.size(); k++)
+                        {
+                            matArray[k] = materials[mesh.materialIdxs[k]];
+                        }
+
+                        if (auto renderer = node->gameObject->GetComponent<UnityEngine::SkinnedMeshRenderer*>())
+                        {
+                            renderer->set_sharedMaterials(matArray);
+                        }
+                        // Non-skinned meshes (MeshRenderer, not SkinnedMeshRenderer)
+                        // aren\'t material-assigned here yet -- the original mod
+                        // doesn\'t handle that case either at this point in the
+                        // pipeline (it\'s covered later by the first/third-person
+                        // mesh-splitting step, which isn\'t ported).
+                    }
+                }
+
+                finishedMaterials = true;
+                VRMLogger.info("Finished generating textures/materials");
+            });
+
+            while(!finishedMaterials)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+
             // --- Reduced port stops here ---
             // The original mod continues on the main thread from this point to:
-            //   1. Decode embedded image buffers + generate Unity textures
-            //   2. Generate VRM (MToon) materials and assign them to renderers
-            //   3. Build a Unity humanoid Avatar from the VRM bone mapping (VRM0/VRM1)
-            //   4. Add an Animator, fix crossed-leg rest pose, add VRIK + TargetManager
-            //   5. Split first-person/third-person meshes (erase head-descendant bones
+            //   1. Build a Unity humanoid Avatar from the VRM bone mapping (VRM0/VRM1)
+            //   2. Add an Animator, fix crossed-leg rest pose, add VRIK + TargetManager
+            //   3. Split first-person/third-person meshes (erase head-descendant bones
             //      for the first-person copy)
-            //   6. Generate VRM springbones
+            //   4. Generate VRM springbones
             // None of that is wired in yet -- modelContext at this point has a real
-            // node/armature/mesh tree and parsed VRM extension data, but no materials,
-            // no humanoid Avatar, and no physics/expression systems. See AvatarLoader.
+            // node/armature/mesh tree, parsed VRM extension data, and (for VRM0 files,
+            // once ShaderLoader has finished) real materials on skinned renderers --
+            // but no humanoid Avatar, and no physics/expression systems. See AvatarLoader.
 
             return modelContext;
         });
