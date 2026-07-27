@@ -8,6 +8,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   module_id: QavatarsRevived
 
@@ -34,7 +38,7 @@ jobs:
         uses: Fernthedev/qpm-action@v1
         with:
           restore: true
-          cache: false
+          cache: true
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Read mod version
