@@ -78,7 +78,7 @@
     },
     {
       "id": "fmt",
-      "versionRange": "*",
+      "versionRange": "^11.0.0",
       "additionalData": {}
     },
     {
