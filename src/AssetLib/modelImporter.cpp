@@ -15,8 +15,13 @@
 #include "AssetLib/generators/intermediateMeshGenerator.hpp"
 #include "AssetLib/generators/textureGenerator.hpp"
 #include "AssetLib/generators/materialGenerator.hpp"
+#include "AssetLib/generators/avatarGenerator.hpp"
 
 #include "MaterialTracker.hpp"
+
+#include "UnityEngine/Animator.hpp"
+#include "UnityEngine/AnimatorCullingMode.hpp"
+#include "UnityEngine/HumanBodyBones.hpp"
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
@@ -27,13 +32,13 @@ namespace AssetLib
     SafePtrUnity<UnityEngine::Shader> ModelImporter::mtoon;
 }
 
-// NOTE ON THIS FILE: this is a reduced port of VRM-Qavatars\' modelImporter.cpp.
+// NOTE ON THIS FILE: this is a reduced port of VRM-Qavatars' modelImporter.cpp.
 // It keeps the node-tree/armature/mesh-building pipeline close to the original
 // (tested, working logic -- minimal changes only). Material/texture generation
 // is now wired in too (see the end of LoadVRM below), but humanoid Avatar/
 // skeleton mapping, VRIK setup, springbone generation, and first/third-person
 // mesh splitting are still cut -- those land in follow-up passes once their
-// own subsystems are ported. What DOES work after this file: loading a VRM\'s
+// own subsystems are ported. What DOES work after this file: loading a VRM's
 // node tree, armature, real Unity meshes (with blendshapes/bone weights),
 // parsed VRM0/VRM1 extension JSON + blendshape master, and (once
 // ShaderLoader has finished loading the mToon shader bundle) real VRM0
@@ -119,7 +124,7 @@ namespace AssetLib
 
     void logAssimpNode(aiNode* node, int depth)
     {
-        VRMLogger.info("{}{}", std::string(depth, \'-\'), node->mName.C_Str());
+        VRMLogger.info("{}{}", std::string(depth, '-'), node->mName.C_Str());
         for (size_t i = 0; i < node->mNumChildren; i++)
         {
             logAssimpNode(node->mChildren[i], depth + 1);
@@ -240,6 +245,12 @@ namespace AssetLib
         return ancestors;
     }
 
+    void SetXLocalRot(UnityEngine::Transform* trans, const float x)
+    {
+        const auto rot = trans->get_localRotation().get_eulerAngles();
+        trans->set_localRotation(UnityEngine::Quaternion::Euler(x, rot.y, rot.z));
+    }
+
     std::future<Structure::VRM::VRMModelContext*> ModelImporter::LoadVRM(const std::string& filename)
     {
         return il2cpp_utils::il2cpp_async(std::launch::async, [filename](){
@@ -351,10 +362,10 @@ namespace AssetLib
                     }
                 }
                 // NOTE: VRM1-only files (vrm.has_value() == false) get an empty
-                // materials list here -- MaterialGenerator\'s VRM1 overload is a
+                // materials list here -- MaterialGenerator's VRM1 overload is a
                 // stub upstream (see materialGenerator.cpp), so there is nothing
-                // real to generate yet. Meshes will render with Unity\'s default
-                // material until that\'s implemented.
+                // real to generate yet. Meshes will render with Unity's default
+                // material until that's implemented.
                 VRMQavatars::MaterialTracker::UpdateMaterials();
 
                 for (size_t i = 0; i < modelContext->nodes.size(); i++)
@@ -373,15 +384,41 @@ namespace AssetLib
                             renderer->set_sharedMaterials(matArray);
                         }
                         // Non-skinned meshes (MeshRenderer, not SkinnedMeshRenderer)
-                        // aren\'t material-assigned here yet -- the original mod
-                        // doesn\'t handle that case either at this point in the
-                        // pipeline (it\'s covered later by the first/third-person
-                        // mesh-splitting step, which isn\'t ported).
+                        // aren't material-assigned here yet -- the original mod
+                        // doesn't handle that case either at this point in the
+                        // pipeline (it's covered later by the first/third-person
+                        // mesh-splitting step, which isn't ported).
                     }
                 }
 
+                // Build a Unity humanoid Avatar from the VRM's bone mapping and
+                // attach an Animator using it. This is what makes the mesh a
+                // "humanoid" Unity can animate/IK against -- without it, VRIK,
+                // (next pass) has nothing to attach to.
+                auto avatarGenerator = Generators::AvatarGenerator();
+                auto avatar = vrm.has_value()
+                    ? avatarGenerator.Generate(vrm.value(), modelContext->nodes, modelContext->armature.value().rootBone->gameObject)
+                    : avatarGenerator.Generate(vrm1.value(), modelContext->nodes, modelContext->armature.value().rootBone->gameObject);
+
+                auto anim = modelContext->rootGameObject->AddComponent<UnityEngine::Animator*>();
+                anim->set_cullingMode(UnityEngine::AnimatorCullingMode::AlwaysAnimate);
+                anim->set_avatar(avatar);
+
+                // Fix crossed legs -- VRM's rest pose and Unity's Mecanim rest
+                // pose disagree slightly on leg rotation, which without this
+                // correction makes the legs render crossed/twisted.
+                auto LUleg = anim->GetBoneTransform(UnityEngine::HumanBodyBones::LeftUpperLeg);
+                auto RUleg = anim->GetBoneTransform(UnityEngine::HumanBodyBones::RightUpperLeg);
+                auto LLleg = anim->GetBoneTransform(UnityEngine::HumanBodyBones::LeftLowerLeg);
+                auto RLleg = anim->GetBoneTransform(UnityEngine::HumanBodyBones::RightLowerLeg);
+
+                SetXLocalRot(LUleg, -4.0f);
+                SetXLocalRot(RUleg, -4.0f);
+                SetXLocalRot(LLleg, 4.0f);
+                SetXLocalRot(RLleg, 4.0f);
+
                 finishedMaterials = true;
-                VRMLogger.info("Finished generating textures/materials");
+                VRMLogger.info("Finished generating textures/materials and humanoid Avatar");
             });
 
             while(!finishedMaterials)
@@ -391,15 +428,17 @@ namespace AssetLib
 
             // --- Reduced port stops here ---
             // The original mod continues on the main thread from this point to:
-            //   1. Build a Unity humanoid Avatar from the VRM bone mapping (VRM0/VRM1)
-            //   2. Add an Animator, fix crossed-leg rest pose, add VRIK + TargetManager
-            //   3. Split first-person/third-person meshes (erase head-descendant bones
+            //   1. Add VRIK + TargetManager (full-body IK)
+            //   2. Split first-person/third-person meshes (erase head-descendant bones
             //      for the first-person copy)
-            //   4. Generate VRM springbones
+            //   3. Generate VRM springbones
             // None of that is wired in yet -- modelContext at this point has a real
-            // node/armature/mesh tree, parsed VRM extension data, and (for VRM0 files,
-            // once ShaderLoader has finished) real materials on skinned renderers --
-            // but no humanoid Avatar, and no physics/expression systems. See AvatarLoader.
+            // node/armature/mesh tree, parsed VRM extension data, (for VRM0 files,
+            // once ShaderLoader has finished) real materials on skinned renderers,
+            // AND a working humanoid Avatar + Animator -- so a plain Animator
+            // Controller could already drive this avatar's arms/legs/head. What's
+            // still missing is full-body IK tracking (VRIK) and physics/expression
+            // systems. See AvatarLoader.
 
             return modelContext;
         });
