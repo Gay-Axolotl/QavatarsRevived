@@ -43,20 +43,19 @@ jobs:
 
       - name: Debug - inspect resolved headers
         run: |
-          echo "--- extern/includes/bs-cordl top level ---"
-          ls -la extern/includes/bs-cordl || echo "bs-cordl dir missing"
-          echo "--- extern/includes/bs-cordl full tree (depth 4) ---"
-          find extern/includes/bs-cordl -maxdepth 4 -type d | sort
-          echo "--- any .hpp anywhere under bs-cordl (count + sample) ---"
-          find extern/includes/bs-cordl -iname "*.hpp" | wc -l
-          find extern/includes/bs-cordl -iname "*.hpp" | head -20
-          echo "--- extern/includes/fmt top level ---"
-          ls -la extern/includes/fmt || echo "fmt dir missing"
-          find extern/includes/fmt -maxdepth 3 | sort
-          echo "--- qpm.json actually used for bs-cordl resolution ---"
-          cat extern/includes/bs-cordl/qpm.json 2>/dev/null || echo "no qpm.json in bs-cordl dir"
-          echo "--- top-level qpm.shared.json / restored versions ---"
-          cat qpm.shared.json 2>/dev/null | head -60 || echo "no qpm.shared.json"
+          echo "--- resolve the bs-cordl symlink target ---"
+          readlink -f extern/includes/bs-cordl/include
+          echo "--- does the symlink target exist? ---"
+          ls -la "$(readlink -f extern/includes/bs-cordl/include)" 2>&1 | head -20
+          echo "--- following symlinks with -L this time ---"
+          find -L extern/includes/bs-cordl -iname "*.hpp" | wc -l
+          find -L extern/includes/bs-cordl -iname "*.hpp" | head -20
+          echo "--- the QPM-RS cache dir directly ---"
+          ls -la /home/runner/.local/share/QPM-RS/cache/bs-cordl/ 2>&1
+          ls -la /home/runner/.local/share/QPM-RS/cache/bs-cordl/4008.0.0/ 2>&1
+          find /home/runner/.local/share/QPM-RS/cache/bs-cordl/4008.0.0/ -maxdepth 3 2>&1 | head -40
+          echo "--- disk usage of that cache entry ---"
+          du -sh /home/runner/.local/share/QPM-RS/cache/bs-cordl/4008.0.0/ 2>&1
 
       - name: Read mod version
         id: mod-version
