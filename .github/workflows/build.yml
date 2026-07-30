@@ -41,22 +41,21 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - inspect resolved headers
+      - name: Debug - locate Material and UnityEngine headers
         run: |
-          echo "--- resolve the bs-cordl symlink target ---"
-          readlink -f extern/includes/bs-cordl/include
-          echo "--- does the symlink target exist? ---"
-          ls -la "$(readlink -f extern/includes/bs-cordl/include)" 2>&1 | head -20
-          echo "--- following symlinks with -L this time ---"
-          find -L extern/includes/bs-cordl -iname "*.hpp" | wc -l
-          find -L extern/includes/bs-cordl -iname "*.hpp" | head -20
-          echo "--- the QPM-RS cache dir directly ---"
-          ls -la /home/runner/.local/share/QPM-RS/cache/bs-cordl/ 2>&1
-          ls -la /home/runner/.local/share/QPM-RS/cache/bs-cordl/4008.0.0/ 2>&1
-          find /home/runner/.local/share/QPM-RS/cache/bs-cordl/4008.0.0/ -maxdepth 3 2>&1 | head -40
-          echo "--- disk usage of that cache entry ---"
-          du -sh /home/runner/.local/share/QPM-RS/cache/bs-cordl/4008.0.0/ 2>&1
-
+          echo "--- top-level folders under bs-cordl include/ ---"
+          ls -la extern/includes/bs-cordl/include/ 2>&1 | head -60
+          echo "--- find any file literally named Material.hpp ---"
+          find -L extern/includes/bs-cordl/include -iname "Material.hpp" 2>&1
+          echo "--- find any file/dir with Material in the name ---"
+          find -L extern/includes/bs-cordl/include -iname "*Material*" 2>&1 | head -20
+          echo "--- find any folder named like UnityEngine or CoreModule ---"
+          find -L extern/includes/bs-cordl/include -maxdepth 1 -type d -iname "*Unity*" 2>&1
+          find -L extern/includes/bs-cordl/include -maxdepth 1 -type d -iname "*Core*" 2>&1
+          echo "--- check how the original VRM-Qavatars-style includes would resolve: search for Texture2D.hpp ---"
+          find -L extern/includes/bs-cordl/include -iname "Texture2D.hpp" 2>&1
+          echo "--- check GameObject.hpp location (we know this compiled fine so far) ---"
+          find -L extern/includes/bs-cordl/include -iname "GameObject.hpp" 2>&1
       - name: Read mod version
         id: mod-version
         run: |
