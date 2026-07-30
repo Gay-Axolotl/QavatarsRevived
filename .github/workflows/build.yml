@@ -41,6 +41,20 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug - inspect resolved headers
+        run: |
+          echo "--- fmt version check ---"
+          find extern -iname "base.h" -path "*fmt*" || echo "NOT FOUND: fmt/base.h"
+          find extern -iname "*.hpp" -path "*fmt*" | head -5
+          echo "--- Material/Texture2D search ---"
+          find extern -iname "Material*" || echo "NOT FOUND: Material*"
+          find extern -iname "Texture2D*" || echo "NOT FOUND: Texture2D*"
+          echo "--- UnityEngine header sample (first 30) ---"
+          find extern -path "*UnityEngine*" -iname "*.hpp" | sort | head -30
+          echo "--- bs-cordl resolved version ---"
+          find extern -iname "*.json" -path "*bs-cordl*" -exec cat {} \; 2>/dev/null | head -20 || echo "no bs-cordl qpm json found"
+          find extern -maxdepth 2 -type d | sort
+
       - name: Read mod version
         id: mod-version
         run: |
