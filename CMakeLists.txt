@@ -13,9 +13,18 @@ add_compile_options(-Wall -Wextra -Wno-unused-parameter -fexceptions -frtti)
 file(GLOB_RECURSE cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE c_src ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
-add_library(${PROJECT_NAME} SHARED ${cpp_src} ${c_src})
+# IMPORTANT: QPM's generated extern.cmake hardcodes target_* calls against
+# the mod's qpm.json "info.id" (here: "qavatarsrevived", lowercase) -- NOT
+# CMake's PROJECT_NAME/"QavatarsRevived". The library target below MUST be
+# named to match info.id exactly, or every target_include_directories/etc.
+# call in extern.cmake fails with "target ... which is not built by this
+# project". Keep this in sync with qpm.json's info.id if that ever changes.
+set(MOD_TARGET_NAME qavatarsrevived)
 
-target_include_directories(${PROJECT_NAME} PRIVATE
+add_library(${MOD_TARGET_NAME} SHARED ${cpp_src} ${c_src})
+set_target_properties(${MOD_TARGET_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+
+target_include_directories(${MOD_TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/shared
 )
@@ -24,10 +33,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # sets up NDK/build variables; extern.cmake configures each dependency's
 # include paths (including per-package compileOptions like bs-cordl's
 # nested include/ subfolder) by calling target_include_directories/etc.
-# directly on the "${PROJECT_NAME}" target -- so these MUST be included
-# after add_library() creates that target, not before. Including them too
-# early is what caused "Cannot specify include directories for target
-# ... which is not built by this project" on the previous attempt.
+# directly on the "qavatarsrevived" target -- so these MUST be included
+# after add_library() creates that target, not before.
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qpm_defines.cmake)
     include(${CMAKE_CURRENT_SOURCE_DIR}/qpm_defines.cmake)
 endif()
@@ -38,10 +45,10 @@ endif()
 # Fallback/supplement: still add the blanket extern/includes path too, for
 # any dependency that doesn't need special per-package include handling.
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes)
+    target_include_directories(${MOD_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes)
 endif()
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs)
-    target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs)
+    target_link_directories(${MOD_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs)
 endif()
 
 # kaleb's asset-embedding CMake module (from extern/, once `qpm restore` has
@@ -50,7 +57,7 @@ endif()
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes/kaleb/shared/cmake/assets.cmake)
     include(${CMAKE_CURRENT_SOURCE_DIR}/extern/includes/kaleb/shared/cmake/assets.cmake)
     add_assets(assets_${PROJECT_NAME} STATIC ${CMAKE_CURRENT_SOURCE_DIR}/assets ${CMAKE_CURRENT_SOURCE_DIR}/include/assets.hpp)
-    target_link_libraries(${PROJECT_NAME} PRIVATE assets_${PROJECT_NAME})
+    target_link_libraries(${MOD_TARGET_NAME} PRIVATE assets_${PROJECT_NAME})
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE log)
+target_link_libraries(${MOD_TARGET_NAME} PRIVATE log)
