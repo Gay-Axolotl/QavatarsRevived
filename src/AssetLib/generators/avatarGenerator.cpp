@@ -210,7 +210,7 @@ namespace AssetLib::Generators
         hd.m_RootMotionBoneName = "";
         try
         {
-            static auto buildHumanoid = il2cpp_utils::resolve_icall<UnityEngine::Avatar*, UnityEngine::GameObject*, UnityEngine::HumanDescription*>("UnityEngine.AvatarBuilder::BuildHumanAvatarInternal_Injected");
+            static auto buildHumanoid = il2cpp_functions::resolve_icall<UnityEngine::Avatar*, UnityEngine::GameObject*, UnityEngine::HumanDescription*>("UnityEngine.AvatarBuilder::BuildHumanAvatarInternal_Injected");
             auto ava = buildHumanoid(root, &hd);
             return ava;
         }
@@ -420,7 +420,7 @@ namespace AssetLib::Generators
         hd.m_RootMotionBoneName = "";
         try
         {
-            static auto buildHumanoid = il2cpp_utils::resolve_icall<UnityEngine::Avatar*, UnityEngine::GameObject*, UnityEngine::HumanDescription*>("UnityEngine.AvatarBuilder::BuildHumanAvatarInternal_Injected");
+            static auto buildHumanoid = il2cpp_functions::resolve_icall<UnityEngine::Avatar*, UnityEngine::GameObject*, UnityEngine::HumanDescription*>("UnityEngine.AvatarBuilder::BuildHumanAvatarInternal_Injected");
             auto ava = buildHumanoid(root, &hd);
             return ava;
         }
