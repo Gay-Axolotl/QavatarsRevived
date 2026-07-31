@@ -20,7 +20,23 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/shared
 )
 
-# QPM-managed deps get pulled in via extern/ once `qpm restore` has run
+# QPM auto-generates these two files at `qpm restore` time. qpm_defines.cmake
+# sets up NDK/build variables; extern.cmake actually configures each
+# dependency's include paths (including per-package compileOptions like
+# bs-cordl's nested include/ subfolder) and creates the qpm::* targets used
+# below. Without including these, dependencies resolve on disk but their
+# headers are NOT reachable by the compiler -- this was the root cause of
+# "UnityEngine/Material.hpp not found" even though the file physically
+# existed under extern/includes/bs-cordl/include/.
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qpm_defines.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/qpm_defines.cmake)
+endif()
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/extern.cmake)
+endif()
+
+# Fallback/supplement: still add the blanket extern/includes path too, for
+# any dependency that doesn't need special per-package include handling.
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes)
     target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes)
 endif()
