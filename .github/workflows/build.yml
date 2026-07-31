@@ -41,13 +41,6 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - inspect DECLARE_CLASS_CODEGEN macro
-        run: |
-          echo "--- macros.hpp: DECLARE_CLASS_CODEGEN definition and surrounding context ---"
-          grep -n "DECLARE_CLASS_CODEGEN" -A 30 extern/includes/custom-types/shared/macros.hpp | head -80
-          echo "--- a real usage example elsewhere in resolved deps, if any ---"
-          grep -rn "DECLARE_CLASS_CODEGEN(" extern/includes/bsml extern/includes/custom-types 2>/dev/null | head -10
-
       - name: Read mod version
         id: mod-version
         run: |
