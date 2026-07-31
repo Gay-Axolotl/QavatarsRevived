@@ -20,14 +20,14 @@ namespace AssetLib::Generators
             unityMesh->set_name(node->name);
             unityMesh->set_indexFormat(mesh.vertices.size() > 65535 ? UnityEngine::Rendering::IndexFormat::UInt32 : UnityEngine::Rendering::IndexFormat::UInt16);
 
-            unityMesh->set_vertices(il2cpp_utils::vectorToArray(mesh.vertices));
-            unityMesh->set_normals(il2cpp_utils::vectorToArray(mesh.normals));
-            unityMesh->set_tangents(il2cpp_utils::vectorToArray(mesh.tangents));
-            unityMesh->set_uv(il2cpp_utils::vectorToArray(mesh.uv1));
-            unityMesh->set_uv2(il2cpp_utils::vectorToArray(mesh.uv2));
-            unityMesh->set_uv3(il2cpp_utils::vectorToArray(mesh.uv3));
-            unityMesh->set_uv4(il2cpp_utils::vectorToArray(mesh.uv4));
-            unityMesh->set_colors(il2cpp_utils::vectorToArray(mesh.colors));
+            unityMesh->set_vertices(ArrayUtils::ToArrayW(mesh.vertices));
+            unityMesh->set_normals(ArrayUtils::ToArrayW(mesh.normals));
+            unityMesh->set_tangents(ArrayUtils::ToArrayW(mesh.tangents));
+            unityMesh->set_uv(ArrayUtils::ToArrayW(mesh.uv1));
+            unityMesh->set_uv2(ArrayUtils::ToArrayW(mesh.uv2));
+            unityMesh->set_uv3(ArrayUtils::ToArrayW(mesh.uv3));
+            unityMesh->set_uv4(ArrayUtils::ToArrayW(mesh.uv4));
+            unityMesh->set_colors(ArrayUtils::ToArrayW(mesh.colors));
 
             std::vector<UnityEngine::BoneWeight> convertedBW = std::vector<UnityEngine::BoneWeight>(mesh.boneWeights.size());
 
@@ -36,12 +36,12 @@ namespace AssetLib::Generators
                 convertedBW[i] = mesh.boneWeights[i].convert();
             }
 
-            unityMesh->set_boneWeights(il2cpp_utils::vectorToArray(convertedBW));
+            unityMesh->set_boneWeights(ArrayUtils::ToArrayW(convertedBW));
             unityMesh->set_subMeshCount(mesh.indices.size());
             uint baseVertex = 0;
             for (int i = 0; i < mesh.indices.size(); i++)
             {
-                const ArrayW<int> indices = il2cpp_utils::vectorToArray<int>(mesh.indices[i]);
+                const ArrayW<int> indices = ArrayUtils::ToArrayW(mesh.indices[i]);
                 unityMesh->SetIndices(indices, mesh.topology[i], i, false, static_cast<int>(baseVertex));
                 baseVertex += mesh.vertexCounts[i];
             }
@@ -54,8 +54,8 @@ namespace AssetLib::Generators
                 if(unityMesh->GetBlendShapeIndex(name) == -1 && !System::String::IsNullOrWhiteSpace(name))
                 {
                     unityMesh->AddBlendShapeFrame(name, 100,
-                        il2cpp_utils::vectorToArray(vertices),
-                        il2cpp_utils::vectorToArray(normals),
+                        ArrayUtils::ToArrayW(vertices),
+                        ArrayUtils::ToArrayW(normals),
                         nullptr
                     );
                 }
@@ -79,7 +79,7 @@ namespace AssetLib::Generators
                     }
                 } 
 
-                unityMesh->set_bindposes(il2cpp_utils::vectorToArray(bindPoses));
+                unityMesh->set_bindposes(ArrayUtils::ToArrayW(bindPoses));
 
                 renderer->set_rootBone(armature.rootBone->gameObject->get_transform());
 
@@ -88,7 +88,7 @@ namespace AssetLib::Generators
                                             return libNode->gameObject->get_transform();
                                         }
                                     );
-                renderer->set_bones(il2cpp_utils::vectorToArray(bones));
+                renderer->set_bones(ArrayUtils::ToArrayW(bones));
                 renderer->set_sharedMesh(unityMesh);
                 unityMesh->RecalculateBounds();
             }
