@@ -5,6 +5,9 @@
 #include "UnityEngine/MeshFilter.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/Matrix4x4.hpp"
+#include "UnityEngine/Vector3.hpp"
+#include "UnityEngine/Vector2.hpp"
+#include "UnityEngine/Color.hpp"
 
 #include "AssetLib/arrayUtils.hpp"
 
@@ -20,14 +23,26 @@ namespace AssetLib::Generators
             unityMesh->set_name(node->name);
             unityMesh->set_indexFormat(mesh.vertices.size() > 65535 ? UnityEngine::Rendering::IndexFormat::UInt32 : UnityEngine::Rendering::IndexFormat::UInt16);
 
-            unityMesh->set_vertices(ArrayUtils::ToArrayW(mesh.vertices));
-            unityMesh->set_normals(ArrayUtils::ToArrayW(mesh.normals));
+            // NOTE: Sombrero::Fast* types are math-optimized wrappers that behave
+            // like their UnityEngine:: counterparts in expressions, but ArrayW<T>
+            // has no cross-type conversion even when the element types are field-
+            // compatible -- these calls need the explicit converting ToArrayW
+            // overload, constructing a real UnityEngine:: value per element.
+            unityMesh->set_vertices(ArrayUtils::ToArrayW<UnityEngine::Vector3>(mesh.vertices,
+                [](const Sombrero::FastVector3& v) { return UnityEngine::Vector3(v.x, v.y, v.z); }));
+            unityMesh->set_normals(ArrayUtils::ToArrayW<UnityEngine::Vector3>(mesh.normals,
+                [](const Sombrero::FastVector3& v) { return UnityEngine::Vector3(v.x, v.y, v.z); }));
             unityMesh->set_tangents(ArrayUtils::ToArrayW(mesh.tangents));
-            unityMesh->set_uv(ArrayUtils::ToArrayW(mesh.uv1));
-            unityMesh->set_uv2(ArrayUtils::ToArrayW(mesh.uv2));
-            unityMesh->set_uv3(ArrayUtils::ToArrayW(mesh.uv3));
-            unityMesh->set_uv4(ArrayUtils::ToArrayW(mesh.uv4));
-            unityMesh->set_colors(ArrayUtils::ToArrayW(mesh.colors));
+            unityMesh->set_uv(ArrayUtils::ToArrayW<UnityEngine::Vector2>(mesh.uv1,
+                [](const Sombrero::FastVector2& v) { return UnityEngine::Vector2(v.x, v.y); }));
+            unityMesh->set_uv2(ArrayUtils::ToArrayW<UnityEngine::Vector2>(mesh.uv2,
+                [](const Sombrero::FastVector2& v) { return UnityEngine::Vector2(v.x, v.y); }));
+            unityMesh->set_uv3(ArrayUtils::ToArrayW<UnityEngine::Vector2>(mesh.uv3,
+                [](const Sombrero::FastVector2& v) { return UnityEngine::Vector2(v.x, v.y); }));
+            unityMesh->set_uv4(ArrayUtils::ToArrayW<UnityEngine::Vector2>(mesh.uv4,
+                [](const Sombrero::FastVector2& v) { return UnityEngine::Vector2(v.x, v.y); }));
+            unityMesh->set_colors(ArrayUtils::ToArrayW<UnityEngine::Color>(mesh.colors,
+                [](const Sombrero::FastColor& c) { return UnityEngine::Color(c.r, c.g, c.b, c.a); }));
 
             std::vector<UnityEngine::BoneWeight> convertedBW = std::vector<UnityEngine::BoneWeight>(mesh.boneWeights.size());
 
@@ -54,8 +69,10 @@ namespace AssetLib::Generators
                 if(unityMesh->GetBlendShapeIndex(name) == -1 && !System::String::IsNullOrWhiteSpace(name))
                 {
                     unityMesh->AddBlendShapeFrame(name, 100,
-                        ArrayUtils::ToArrayW(vertices),
-                        ArrayUtils::ToArrayW(normals),
+                        ArrayUtils::ToArrayW<UnityEngine::Vector3>(vertices,
+                            [](const Sombrero::FastVector3& v) { return UnityEngine::Vector3(v.x, v.y, v.z); }),
+                        ArrayUtils::ToArrayW<UnityEngine::Vector3>(normals,
+                            [](const Sombrero::FastVector3& v) { return UnityEngine::Vector3(v.x, v.y, v.z); }),
                         nullptr
                     );
                 }
