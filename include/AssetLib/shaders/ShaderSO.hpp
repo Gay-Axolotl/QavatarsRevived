@@ -7,13 +7,13 @@
 #include "UnityEngine/Material.hpp"
 #include "UnityEngine/GameObject.hpp"
 
-// NOTE: DECLARE_CLASS_CODEGEN in this custom-types version (0.18.3) only
-// takes 3 fixed args (namespace, name, baseT) -- no inline body/variadic
-// field-declaration block, unlike the pattern shown in the BSMG wiki and
-// porting guide (which describe an older custom-types API). Using
-// DECLARE_CLASS_CODEGEN_INTERFACES instead, which does support a trailing
-// variadic block, passing zero interfaces.
-DECLARE_CLASS_CODEGEN_INTERFACES(VRMData, ShaderSO, UnityEngine::ScriptableObject,
+// Reverted to the wiki-documented pattern (bsmg.wiki/modding/quest/custom-types.html):
+// "parameters are (namespace, class name, parent class, contents)" -- this IS
+// the correct, current custom-types API. The earlier switch to
+// DECLARE_CLASS_CODEGEN_INTERFACES was based on a misread of a truncated
+// macro definition; that macro's variadic part is for interface types
+// (fed into ExtractClasses<...>()), not a field body, which is why it broke.
+DECLARE_CLASS_CODEGEN(VRMData, ShaderSO, UnityEngine::ScriptableObject,
     DECLARE_INSTANCE_FIELD(UnityEngine::Shader*, mToonShader);
     DECLARE_INSTANCE_FIELD(UnityEngine::Shader*, mirrorShader);
     DECLARE_INSTANCE_FIELD(UnityEngine::Material*, shadowMaterial);
