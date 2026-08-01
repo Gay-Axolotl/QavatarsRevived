@@ -22,6 +22,7 @@
 #include "UnityEngine/Animator.hpp"
 #include "UnityEngine/AnimatorCullingMode.hpp"
 #include "UnityEngine/HumanBodyBones.hpp"
+#include "UnityEngine/SkinnedMeshRenderer.hpp"
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
@@ -336,7 +337,7 @@ namespace AssetLib
             }
 
             bool finishedMaterials = false;
-            BSML::MainThreadScheduler::Schedule([modelContext, images, vrm, textures, &finishedMaterials](){
+            BSML::MainThreadScheduler::Schedule([modelContext, images, vrm, vrm1, textures, &finishedMaterials](){
                 VRMLogger.info("Generating textures/materials on mainthread...");
 
                 // ShaderLoader::LoadBund() must have finished before this runs,
