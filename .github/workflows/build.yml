@@ -41,9 +41,17 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - full unambiguous DECLARE_CLASS_CODEGEN line
+      - name: Debug - version and full DECLARE_INSTANCE_FIELD + surrounding class-body pattern
         run: |
-          sed -n '303,308p' extern/includes/custom-types/shared/macros.hpp
+          echo "--- custom-types resolved version ---"
+          find extern -maxdepth 2 -iname "*custom-types*" -exec readlink -f {} \; 2>/dev/null
+          cat extern/includes/custom-types/qpm.json 2>/dev/null | head -20 || echo "no qpm.json"
+          echo "--- DECLARE_INSTANCE_FIELD definition ---"
+          grep -n "define DECLARE_INSTANCE_FIELD" -A 3 extern/includes/custom-types/shared/macros.hpp
+          echo "--- top of macros.hpp: version/changelog comments if any ---"
+          sed -n '1,22p' extern/includes/custom-types/shared/macros.hpp
+          echo "--- search whole extern tree for a real .hpp file that uses DECLARE_CLASS_CODEGEN with a body, to see actual working syntax ---"
+          grep -rl "DECLARE_CLASS_CODEGEN(" extern/includes --include=*.hpp 2>/dev/null | grep -v "macros.hpp"
 
       - name: Read mod version
         id: mod-version
