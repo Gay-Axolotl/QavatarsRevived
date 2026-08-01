@@ -41,15 +41,9 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - find a real working DECLARE_CLASS_CODEGEN usage
+      - name: Debug - full unambiguous DECLARE_CLASS_CODEGEN line
         run: |
-          echo "--- ___DECLARE_TYPE_WRAPPER_INHERITANCE full definition ---"
-          grep -n "___DECLARE_TYPE_WRAPPER_INHERITANCE" -A 60 extern/includes/custom-types/shared/macros.hpp | head -100
-          echo "--- search bsml for any DECLARE_CLASS_CODEGEN or _INTERFACES usage as real example ---"
-          grep -rln "DECLARE_CLASS_CODEGEN" extern/includes/bsml 2>/dev/null
-          echo "--- if found, show one example file in full ---"
-          FILE=$(grep -rln "DECLARE_CLASS_CODEGEN" extern/includes/bsml 2>/dev/null | head -1)
-          if [ -n "$FILE" ]; then cat "$FILE"; fi
+          sed -n '303,308p' extern/includes/custom-types/shared/macros.hpp
 
       - name: Read mod version
         id: mod-version
