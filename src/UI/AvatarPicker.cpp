@@ -13,7 +13,7 @@
 namespace QavatarsRevived::UI {
 
     namespace {
-        // Cached between DidActivate calls so re-opening the picker doesn\'t
+        // Cached between DidActivate calls so re-opening the picker doesn't
         // re-scan disk every time; RefreshList() rebuilds it on demand.
         std::vector<std::string> foundAvatarPaths;
         BSML::CustomListTableData* avatarListData = nullptr;
@@ -24,8 +24,8 @@ namespace QavatarsRevived::UI {
             std::error_code ec;
 
             if (!std::filesystem::exists(vrm_avatars_path, ec) || ec) {
-                // Directory doesn\'t exist yet -- not an error, just means the
-                // user hasn\'t dropped any .vrm files in there.
+                // Directory doesn't exist yet -- not an error, just means the
+                // user hasn't dropped any .vrm files in there.
                 return found;
             }
 
@@ -34,7 +34,7 @@ namespace QavatarsRevived::UI {
                 if (!entry.is_regular_file()) continue;
                 auto ext = entry.path().extension().string();
                 // case-insensitive .vrm check
-                if (ext.size() == 4 && (ext[1] == \'v\' || ext[1] == \'V\') && (ext[2] == \'r\' || ext[2] == \'R\') && (ext[3] == \'m\' || ext[3] == \'M\') && ext[0] == \'.\') {
+                if (ext.size() == 4 && (ext[1] == 'v' || ext[1] == 'V') && (ext[2] == 'r' || ext[2] == 'R') && (ext[3] == 'm' || ext[3] == 'M') && ext[0] == '.') {
                     found.push_back(entry.path().string());
                 }
             }
@@ -47,10 +47,10 @@ namespace QavatarsRevived::UI {
             if (!avatarListData) return;
 
             // NOTE: passing std::string directly where StringW is expected relies
-            // on an implicit conversion that\'s standard in this ecosystem but
-            // wasn\'t directly confirmed against BSML source (StringW itself is a
+            // on an implicit conversion that's standard in this ecosystem but
+            // wasn't directly confirmed against BSML source (StringW itself is a
             // beatsaber-hook type, not part of the BSML headers read for this
-            // pass). If this doesn\'t compile, wrap with StringW(...) explicitly.
+            // pass). If this doesn't compile, wrap with StringW(...) explicitly.
             auto cells = ListW<BSML::CustomCellInfo*>::New();
             cells->EnsureCapacity(foundAvatarPaths.size());
             for (const auto& path : foundAvatarPaths) {
@@ -79,7 +79,7 @@ namespace QavatarsRevived::UI {
             }
 
             // LoadAvatar() is async (see AvatarLoader.hpp) -- this just kicks
-            // it off. There\'s currently no UI feedback for completion beyond
+            // it off. There's currently no UI feedback for completion beyond
             // this "Loading..." label and the VRMLogger output; a proper
             // loading-progress/error callback is follow-up work once
             // avatar rendering itself is further along.
