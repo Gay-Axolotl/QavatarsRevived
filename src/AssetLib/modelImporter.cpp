@@ -23,6 +23,9 @@
 #include "UnityEngine/AnimatorCullingMode.hpp"
 #include "UnityEngine/HumanBodyBones.hpp"
 #include "UnityEngine/SkinnedMeshRenderer.hpp"
+#include "UnityEngine/HumanBone.hpp"
+#include "UnityEngine/SkeletonBone.hpp"
+#include "UnityEngine/HumanDescription.hpp"
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
