@@ -41,14 +41,6 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - true end of the macro (past the first closing brace)
-        run: |
-          echo "--- line number of the macro start ---"
-          grep -n "^#define ___DECLARE_TYPE_WRAPPER_INHERITANCE" extern/includes/custom-types/shared/macros.hpp
-          echo "--- next 30 lines after that (unfiltered, raw) ---"
-          START=$(grep -n "^#define ___DECLARE_TYPE_WRAPPER_INHERITANCE" extern/includes/custom-types/shared/macros.hpp | cut -d: -f1)
-          END=$((START + 250))
-          sed -n "${START},${END}p" extern/includes/custom-types/shared/macros.hpp | tail -60
       - name: Read mod version
         id: mod-version
         run: |
