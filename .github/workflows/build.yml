@@ -41,6 +41,15 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug - full DECLARE_CLASS_CODEGEN chain and any real .hpp with fields
+        run: |
+          echo "--- ___DECLARE_TYPE_WRAPPER_INHERITANCE FULL definition, no truncation ---"
+          awk "/^#define ___DECLARE_TYPE_WRAPPER_INHERITANCE/,/^}/" extern/includes/custom-types/shared/macros.hpp | tail -80
+          echo "--- search ALL of extern for DECLARE_INSTANCE_FIELD actual usage in any .hpp (not macros.hpp) ---"
+          grep -rn "DECLARE_INSTANCE_FIELD(" extern/includes --include=*.hpp 2>/dev/null | grep -v "/custom-types/shared/macros.hpp" | head -20
+          echo "--- search ALL of extern for DECLARE_CLASS_CODEGEN actual usage in any .hpp (not macros.hpp) ---"
+          grep -rn "DECLARE_CLASS_CODEGEN" extern/includes --include=*.hpp 2>/dev/null | grep -v "/custom-types/shared/macros.hpp" | head -20
+
       - name: Read mod version
         id: mod-version
         run: |
