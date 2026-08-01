@@ -1,16 +1,18 @@
 #pragma once
 
-#include "ShaderSO.hpp"
 #include "custom-types/shared/coroutine.hpp"
-
 #include "UnityEngine/AssetBundle.hpp"
+#include "UnityEngine/ScriptableObject.hpp"
 
 namespace AssetLib
 {
     class ShaderLoader
     {
     public:
-        static SafePtrUnity<VRMData::ShaderSO> shaders;
+        // Not a registered custom-type -- the loaded asset is read via
+        // runtime field lookup (see ShaderSOFields), so this only needs to
+        // be a plain ScriptableObject reference.
+        static SafePtrUnity<UnityEngine::ScriptableObject> shaders;
 
         static custom_types::Helpers::Coroutine LoadBund();
 
