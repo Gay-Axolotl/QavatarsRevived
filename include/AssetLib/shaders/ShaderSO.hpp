@@ -1,21 +1,25 @@
 #pragma once
 
 #include "QavatarsRevived/Main.hpp"
-#include "custom-types/shared/macros.hpp"
 #include "UnityEngine/ScriptableObject.hpp"
 #include "UnityEngine/Shader.hpp"
 #include "UnityEngine/Material.hpp"
-#include "UnityEngine/GameObject.hpp"
 
-// NOTE: This is a temporary minimal version. DECLARE_CLASS_CODEGEN in the
-// resolved custom-types 0.18.4 both forward-declares AND fully defines the
-// class from its 3 fixed args (namespace, name, baseT) -- passing a body
-// (inline or via reopening the class afterward) both failed to compile.
-// The exact mechanism this version uses to add DECLARE_INSTANCE_FIELD-style
-// fields to a codegen class is not yet confirmed. Since mToonShader/
-// mirrorShader/shadowMaterial aren't read anywhere in this project's C++
-// code yet (ShaderLoader only needs the ShaderSO type itself to exist for
-// LoadAssetFromBundleAsync's type parameter), shipping this without the
-// fields unblocks the rest of the build. Revisit when actually wiring up
-// mirror/shadow material support.
-DECLARE_CLASS_CODEGEN(VRMData, ShaderSO, UnityEngine::ScriptableObject);
+// NOTE: this is NOT a registered custom-types class. The bundled shader
+// AssetBundle's "Assets/shaders.asset" is a real, existing C# ScriptableObject
+// type from the original mod, loaded at runtime via LoadAssetAsync -- we
+// don't need to (and shouldn't) redeclare/register a new IL2CPP type for it.
+// custom-types' DECLARE_CLASS_CODEGEN + DECLARE_INSTANCE_FIELD macro pattern
+// (as used in the original mod, and documented for an older custom-types
+// version) doesn't produce a working class body in the resolved
+// custom-types 0.18.4 here -- rather than fight that further, this reads
+// the three fields at runtime via il2cpp_utils::GetFieldValue, which is
+// the standard, verified way to read fields off an arbitrary Il2CppObject*
+// by name without declaring a matching C++ type.
+namespace VRMData {
+    namespace ShaderSOFields {
+        UnityEngine::Shader* GetMToonShader(UnityEngine::ScriptableObject* instance);
+        UnityEngine::Shader* GetMirrorShader(UnityEngine::ScriptableObject* instance);
+        UnityEngine::Material* GetShadowMaterial(UnityEngine::ScriptableObject* instance);
+    }
+}
