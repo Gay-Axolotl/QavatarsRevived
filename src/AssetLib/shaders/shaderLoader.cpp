@@ -3,6 +3,7 @@
 #include <string_view>
 
 #include "AssetLib/modelImporter.hpp"
+#include "AssetLib/shaders/ShaderSO.hpp"
 #include "UnityEngine/AssetBundleCreateRequest.hpp"
 #include "UnityEngine/AssetBundleRequest.hpp"
 
@@ -17,7 +18,7 @@ namespace AssetLib
 {
     #define coro(...) custom_types::Helpers::CoroutineHelper::New(__VA_ARGS__)
 
-    SafePtrUnity<VRMData::ShaderSO> ShaderLoader::shaders;
+    SafePtrUnity<UnityEngine::ScriptableObject> ShaderLoader::shaders;
 
     custom_types::Helpers::Coroutine ShaderLoader::LoadBund()
     {
@@ -31,8 +32,8 @@ namespace AssetLib
         }
         VRMLogger.info("Loaded Bundle");
 
-        VRMData::ShaderSO* data = nullptr;
-        co_yield coro(ShaderLoader::LoadAssetFromBundleAsync(ass, "Assets/shaders.asset", csTypeOf(VRMData::ShaderSO*), reinterpret_cast<UnityEngine::Object*&>(data)));
+        UnityEngine::ScriptableObject* data = nullptr;
+        co_yield coro(ShaderLoader::LoadAssetFromBundleAsync(ass, "Assets/shaders.asset", csTypeOf(UnityEngine::ScriptableObject*), reinterpret_cast<UnityEngine::Object*&>(data)));
         if(data == nullptr)
         {
             VRMLogger.error("Couldn\'t load asset...");
@@ -41,7 +42,7 @@ namespace AssetLib
         ass->Unload(false);
         VRMLogger.info("Loaded asset");
 
-        AssetLib::ModelImporter::mtoon = data->mToonShader;
+        AssetLib::ModelImporter::mtoon = VRMData::ShaderSOFields::GetMToonShader(data);
         shaders = data;
         VRMLogger.info("Finished Loading assets");
         co_return;
