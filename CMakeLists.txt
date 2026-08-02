@@ -4,8 +4,18 @@ project(QavatarsRevived)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_definitions(VERSION=\"${MOD_VERSION}\")
-add_compile_definitions(MOD_ID=\"QavatarsRevived\")
+add_compile_definitions(VERSION="${MOD_VERSION}")
+add_compile_definitions(MOD_ID="QavatarsRevived")
+
+# Required for bs-cordl codegen types to actually generate their inline
+# method bodies (Transform::SetParent, set_localPosition, etc.) instead of
+# leaving them as declaration-only, which causes "undefined hidden symbol"
+# linker errors even though the code compiles fine. Confirmed via
+# Fernthedev/Sombrero-quest's README: "For codegen, it is required to have
+# HAS_CODEGEN defined."
+add_compile_definitions(HAS_CODEGEN)
+add_compile_definitions(NEED_UNSAFE_CSHARP)
+add_compile_options(-fdeclspec)
 
 # extra warnings, but don't fail the build on them yet -- fresh codebase, expect churn
 add_compile_options(-Wall -Wextra -Wno-unused-parameter -fexceptions -frtti)
