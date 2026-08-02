@@ -41,16 +41,14 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - full Transform impl file + wc
+      - name: Debug - impl file has_include guard resolution
         run: |
-          echo "--- line count of impl file ---"
-          wc -l extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp
-          echo "--- grep for the STRING SetParent anywhere (case sensitive, no context) ---"
-          grep -c "SetParent" extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp
-          echo "--- grep the DEF file the same way ---"
-          grep -c "SetParent" extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_def.hpp
-          echo "--- first 80 lines of impl file, to see the general body-emission pattern for ANY method ---"
-          sed -n '1,80p' extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp
+          echo "--- full top-of-file guard block (first 20 lines) ---"
+          head -20 extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp
+          echo "--- find where this __has_include guard CLOSES (search for matching #endif near end, or find NEED_NO_CODEGEN_WRAPPER type check) ---"
+          grep -n "^#if\|^#endif\|^#else\|NEED_NO_CODEGEN_WRAPPER\|CODEGEN_HEADERS_ONLY" extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp | head -20
+          echo "--- does modelImporter.cpp actually reach this include with il2cpp-utils already visible? print modelImporter.cpp's own include order ---"
+          head -25 src/AssetLib/modelImporter.cpp
 
       - name: Read mod version
         id: mod-version
