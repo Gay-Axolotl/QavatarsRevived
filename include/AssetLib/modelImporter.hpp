@@ -20,7 +20,7 @@ namespace AssetLib
         static std::future<Structure::ModelContext*> Load(const std::string& filename, bool loadMaterials);
 
         // .vrm files only. Calls Load() for the base mesh/armature pipeline, then
-        // separately parses the glTF binary\'s JSON chunk to pull out the VRM
+        // separately parses the glTF binary's JSON chunk to pull out the VRM
         // extension block (VRM 0.0 or 1.0) and blendshape master data.
         //
         // NOTE: this is a reduced port. Humanoid avatar/skeleton mapping, VRIK
