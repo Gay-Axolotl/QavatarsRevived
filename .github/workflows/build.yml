@@ -59,23 +59,7 @@ jobs:
             -Bbuild -S.
 
       - name: Build
-        run: cmake --build build || true
-
-      - name: Debug - symbol table inspection
-        run: |
-          echo "--- find the object file that references SetParent ---"
-          OBJ=$(find build -name "modelImporter.cpp.o" | head -1)
-          echo "object file: $OBJ"
-          echo "--- nm on that object file, grep SetParent (T=defined, U=undefined) ---"
-          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm "$OBJ" | grep -i "SetParent" || echo "no SetParent symbol found in this object at all"
-          echo "--- full nm output line count and a sample of Transform-related symbols ---"
-          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm "$OBJ" | grep -i "Transform" | head -20
-          echo "--- re-run the actual failing link command with verbose output ---"
-          cmake --build build --verbose 2>&1 | tail -60
-
-      - name: Fail if build actually failed
-        run: |
-          test -f build/libQavatarsRevived.so || (echo "BUILD DID NOT PRODUCE OUTPUT" && exit 1)
+        run: cmake --build build
 
       - name: Build qmod package
         run: qpm qmod build
