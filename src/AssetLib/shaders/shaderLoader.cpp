@@ -11,7 +11,7 @@
 
 // NOTE: the original mod also sets VRMQavatars::MirrorManager::mirrorShader
 // here. MirrorManager (in-game mirror rendering) is a separate, unrelated
-// feature that hasn\'t been ported -- the mToon shader assignment below is
+// feature that hasn't been ported -- the mToon shader assignment below is
 // the only piece material generation actually needs.
 
 namespace AssetLib
@@ -27,7 +27,7 @@ namespace AssetLib
         co_yield coro(ShaderLoader::LoadBundleFromMemoryAsync(Assets::shaders_sbund, ass));
         if (!ass)
         {
-            VRMLogger.error("Couldn\'t load bundle from file, dieing...");
+            VRMLogger.error("Couldn't load bundle from file, dieing...");
             co_return;
         }
         VRMLogger.info("Loaded Bundle");
@@ -36,7 +36,7 @@ namespace AssetLib
         co_yield coro(ShaderLoader::LoadAssetFromBundleAsync(ass, "Assets/shaders.asset", csTypeOf(UnityEngine::ScriptableObject*), reinterpret_cast<UnityEngine::Object*&>(data)));
         if(data == nullptr)
         {
-            VRMLogger.error("Couldn\'t load asset...");
+            VRMLogger.error("Couldn't load asset...");
             co_return;
         }
         ass->Unload(false);
