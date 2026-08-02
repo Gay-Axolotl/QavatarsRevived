@@ -41,15 +41,6 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - impl file has_include guard resolution
-        run: |
-          echo "--- full top-of-file guard block (first 20 lines) ---"
-          head -20 extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp
-          echo "--- find where this __has_include guard CLOSES (search for matching #endif near end, or find NEED_NO_CODEGEN_WRAPPER type check) ---"
-          grep -n "^#if\|^#endif\|^#else\|NEED_NO_CODEGEN_WRAPPER\|CODEGEN_HEADERS_ONLY" extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp | head -20
-          echo "--- does modelImporter.cpp actually reach this include with il2cpp-utils already visible? print modelImporter.cpp's own include order ---"
-          head -25 src/AssetLib/modelImporter.cpp
-
       - name: Read mod version
         id: mod-version
         run: |
@@ -68,7 +59,23 @@ jobs:
             -Bbuild -S.
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build || true
+
+      - name: Debug - symbol table inspection
+        run: |
+          echo "--- find the object file that references SetParent ---"
+          OBJ=$(find build -name "modelImporter.cpp.o" | head -1)
+          echo "object file: $OBJ"
+          echo "--- nm on that object file, grep SetParent (T=defined, U=undefined) ---"
+          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm "$OBJ" | grep -i "SetParent" || echo "no SetParent symbol found in this object at all"
+          echo "--- full nm output line count and a sample of Transform-related symbols ---"
+          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm "$OBJ" | grep -i "Transform" | head -20
+          echo "--- re-run the actual failing link command with verbose output ---"
+          cmake --build build --verbose 2>&1 | tail -60
+
+      - name: Fail if build actually failed
+        run: |
+          test -f build/libQavatarsRevived.so || (echo "BUILD DID NOT PRODUCE OUTPUT" && exit 1)
 
       - name: Build qmod package
         run: qpm qmod build
