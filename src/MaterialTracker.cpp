@@ -4,7 +4,7 @@
 
 // NOTE: the original mod also calls VRMQavatars::MirrorManager::UpdateMirror()
 // here if a mirror is active. MirrorManager (in-game mirror rendering) is a
-// separate, unrelated feature that hasn\'t been ported -- it\'s not needed for
+// separate, unrelated feature that hasn't been ported -- it's not needed for
 // materials to work, so that call is left out rather than faked.
 
 namespace VRMQavatars
