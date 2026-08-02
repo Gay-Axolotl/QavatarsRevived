@@ -41,15 +41,17 @@ jobs:
           cache: false
           workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - Transform.hpp SetParent implementation
+      - name: Debug - Transform impl split files
         run: |
-          echo "--- find the actual Transform header defining SetParent ---"
-          grep -rl "SetParent" extern/includes/bs-cordl/include/UnityEngine/*.hpp | head -3
-          echo "--- show SetParent's declaration/definition with context ---"
-          grep -n "SetParent" -B5 -A15 extern/includes/bs-cordl/include/UnityEngine/Transform.hpp
-          echo "--- check what guards the actual body (search whole file for ifdef/HAS_CODEGEN etc near top) ---"
-          sed -n '1,40p' extern/includes/bs-cordl/include/UnityEngine/Transform.hpp
-          echo "--- confirm which flags REALLY got passed to the compiler for our target ---"
+          echo "--- zzzz__Transform_def.hpp: SetParent declaration ---"
+          grep -n "SetParent" -B3 -A10 extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_def.hpp
+          echo "--- zzzz__Transform_impl.hpp: SetParent implementation ---"
+          grep -n "SetParent" -B3 -A20 extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp
+          echo "--- top of _impl.hpp: any include guard / ifdef controlling whether bodies compile ---"
+          sed -n '1,30p' extern/includes/bs-cordl/include/UnityEngine/zzzz__Transform_impl.hpp
+          echo "--- is _impl.hpp even included by Transform.hpp? ---"
+          cat extern/includes/bs-cordl/include/UnityEngine/Transform.hpp
+          echo "--- check compile_commands.json for actual flags ---"
           find . -name "compile_commands.json" 2>/dev/null
 
       - name: Read mod version
