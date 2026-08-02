@@ -41,7 +41,14 @@
     {
       "id": "bs-cordl",
       "versionRange": "^4008.*",
-      "additionalData": {}
+      "additionalData": {
+        "headersOnly": true,
+        "compileOptions": {
+          "includePaths": [
+            "include"
+          ]
+        }
+      }
     },
     {
       "id": "custom-types",
