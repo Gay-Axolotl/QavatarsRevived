@@ -45,6 +45,27 @@ jobs:
         run: |
           sed -n '1,50p' extern/includes/scotland2/shared/modloader.h
 
+      - name: Debug - Transform.hpp SetParent implementation
+        run: |
+          echo "--- find the actual Transform header defining SetParent ---"
+          grep -rl "SetParent" extern/includes/bs-cordl/include/UnityEngine/*.hpp | head -3
+          echo "--- show SetParent's declaration/definition with context ---"
+          grep -n "SetParent" -B5 -A15 extern/includes/bs-cordl/include/UnityEngine/Transform.hpp
+          echo "--- check what guards the actual body (search whole file for ifdef/HAS_CODEGEN etc near top) ---"
+          sed -n '1,40p' extern/includes/bs-cordl/include/UnityEngine/Transform.hpp
+          echo "--- confirm which flags REALLY got passed to the compiler for our target (search compile_commands.json if it exists) ---"
+          find . -name "compile_commands.json" 2>/dev/null
+          if [ -f build/compile_commands.json ]; then
+            python3 -c "
+import json
+d = json.load(open('build/compile_commands.json'))
+for entry in d:
+    if 'modelImporter.cpp' in entry['file']:
+        print(entry['command'][:2000])
+        break
+"
+          fi
+
       - name: Read mod version
         id: mod-version
         run: |
