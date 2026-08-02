@@ -9,7 +9,7 @@ namespace QavatarsRevived {
     void InitAvatarLoader() {
         VRMLogger.info("Avatar loader ready (basic loading only -- see AvatarLoader.hpp)");
 
-        // Kick off loading the embedded mToon shader bundle now, so it\'s
+        // Kick off loading the embedded mToon shader bundle now, so it's
         // ready by the time anyone calls LoadAvatar(). Materials generated
         // before this finishes would silently get a null shader.
         BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(
