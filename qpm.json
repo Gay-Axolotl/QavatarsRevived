@@ -41,22 +41,7 @@
     {
       "id": "bs-cordl",
       "versionRange": "^4008.*",
-      "additionalData": {
-        "headersOnly": true,
-        "compileOptions": {
-          "includePaths": [
-            "include"
-          ],
-          "cppFeatures": [],
-          "cppFlags": [
-            "-DNEED_UNSAFE_CSHARP",
-            "-fdeclspec",
-            "-DUNITY_2021",
-            "-DHAS_CODEGEN",
-            "-Wno-invalid-offsetof"
-          ]
-        }
-      }
+      "additionalData": {}
     },
     {
       "id": "custom-types",
