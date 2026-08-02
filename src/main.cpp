@@ -4,14 +4,18 @@
 
 #include "bsml/shared/BSML.hpp"
 
-static ModInfo modInfo{MOD_ID, VERSION, 0};
+// NOTE: this scotland2 version's CModInfo is a plain C struct
+// { id, version, version_long } with no ModInfo wrapper class / to_c()
+// method (that API belonged to an older scotland2/beatsaber-hook version).
+// Confirmed directly from extern/includes/scotland2/shared/modloader.h.
+static CModInfo modInfo{MOD_ID, VERSION, 0};
 
 extern "C" void setup(CModInfo* info) {
-    *info = modInfo.to_c();
+    *info = modInfo;
     VRMLogger.info("QavatarsRevived setup()");
 
     // TODO: install function hooks here once ported.
-    // Nothing scene/game-state dependent belongs in setup() -- that\'s late_load()\'s job.
+    // Nothing scene/game-state dependent belongs in setup() -- that's late_load()'s job.
 }
 
 extern "C" void late_load() {
