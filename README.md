@@ -41,6 +41,48 @@ built" below.
 - [ ] Replay-mode support
 - [ ] Testing on-device — **nothing in this repo has been built or run yet**
 
+## Current build status (paused, needs fresh eyes)
+
+CI now gets through **all C++ compilation successfully** -- every source
+file compiles clean (warnings only). The build fails at the **link** step
+with `undefined hidden symbol` errors for a handful of `bs-cordl` codegen
+methods actually used in the code, e.g.:
+
+- `UnityEngine::Transform::SetParent`
+- `UnityEngine::Transform::set_localPosition` / `set_localRotation` / etc.
+- `UnityEngine::Mesh::IndexFormat::UInt16` / `UInt32`
+
+**What's confirmed so far:**
+- `bs-cordl`'s `qpm.json` entry needs `"additionalData": {"headersOnly": true, "compileOptions": {"includePaths": ["include"]}}`
+  -- without this, `UnityEngine/*.hpp` includes fail to resolve at all
+  (the package resolves to `extern/includes/bs-cordl/include/UnityEngine/...`,
+  one level deeper than the blanket `extern/includes` path covers).
+- Reverting that to plain `{}` (matching a real, confirmed-1.40.8-shipped
+  mod's `qpm.json`, `hardcpp/QBeatSaberPlus-GameTweaker`) breaks compilation
+  entirely -- so that mod must resolve bs-cordl's include path some other
+  way not visible in its `qpm.json` alone (possibly its own custom
+  `build.ps1` script, not plain `cmake --build`).
+- `libil2cpp` has **no linkable `.so` anywhere** on the CI runner --
+  confirmed via filesystem search -- so this isn't a missing
+  `target_link_libraries` fix.
+- Adding `HAS_CODEGEN` / `NEED_UNSAFE_CSHARP` / `-fdeclspec` compile
+  definitions (a documented requirement for *Sombrero*, a different
+  dependency) made no difference to this specific linker error -- confirmed
+  by direct A/B comparison of the undefined-symbol list with and without
+  those flags. Not the cause; don't re-try this without new evidence.
+- `nm` on the actual compiled `modelImporter.cpp.o` shows these symbols as
+  **completely absent** (not just undefined-but-referenced) -- the inline
+  method bodies in `bs-cordl`'s `zzzz__Transform_impl.hpp` aren't being
+  emitted into our object files at all, despite that header being
+  unconditionally included (no `#if`/`__has_include` guard was found
+  gating it).
+
+**Best next step:** find `QBeatSaberPlus-GameTweaker`'s actual
+`CMakeLists.txt` / `build.ps1` (not just its `qpm.json`) and diff against
+ours -- that's the one piece of a confirmed-working reference we haven't
+been able to see yet. Web search wasn't surfacing that file's raw content
+during this session.
+
 ## How this is being built
 
 The original author's source (`BSQ-VRM/VRM-Qavatars`) was provided as a
