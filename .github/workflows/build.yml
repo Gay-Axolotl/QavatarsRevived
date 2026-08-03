@@ -47,16 +47,14 @@ jobs:
           version=$(jq -r '.info.version' qpm.json)
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      # Matches the real reference mod's build.ps1: qpm_defines.cmake (generated
+      # by `qpm restore` above, included as the first line of CMakeLists.txt)
+      # sets up the NDK toolchain/ABI/platform/MOD_VERSION internally -- we
+      # don't pass those as manual -D flags on the command line here anymore,
+      # since doing so previously seemed to conflict with what qpm_defines.cmake
+      # expects to configure itself.
       - name: Configure CMake
-        run: |
-          cmake -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake" \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-24 \
-            -DCMAKE_MAKE_PROGRAM=ninja \
-            -DMOD_VERSION=${{ steps.mod-version.outputs.version }} \
-            -Bbuild -S.
+        run: cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -B build
 
       - name: Build
         run: cmake --build build
