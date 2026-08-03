@@ -1,55 +1,56 @@
-cmake_minimum_required(VERSION 3.21)
-project(QavatarsRevived)
+# include some defines automatically made by qpm
+include(qpm_defines.cmake)
+
+cmake_minimum_required(VERSION 3.22)
+project(${COMPILE_ID})
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED 20)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(SHARED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
+
+# Compile options confirmed from a real, working, confirmed-1.40.8 mod
+# (hardcpp/QBeatSaberPlus-GameTweaker) -- -fdeclspec and -fvisibility=hidden
+# in particular were missing from this project's original setup and are
+# very likely why bs-cordl codegen method bodies (Transform::SetParent
+# etc.) weren't being emitted into our object files, causing "undefined
+# hidden symbol" link errors.
+add_compile_options(-frtti -fPIE -fPIC -fexceptions -fdeclspec -fvisibility=hidden -Wno-extra-qualification)
+add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 
 add_compile_definitions(VERSION="${MOD_VERSION}")
-add_compile_definitions(MOD_ID="QavatarsRevived")
+add_compile_definitions(MOD_ID="${MOD_ID}")
+# Also confirmed from the same reference -- UNITY_2021 and
+# CORDL_RUNTIME_FIELD_NULL_CHECKS are real compile definitions that
+# real, shipped bs-cordl-based mods set and this project didn't.
+add_compile_definitions(UNITY_2021)
+add_compile_definitions(CORDL_RUNTIME_FIELD_NULL_CHECKS)
 
-# extra warnings, but don't fail the build on them yet -- fresh codebase, expect churn
-add_compile_options(-Wall -Wextra -Wno-unused-parameter -fexceptions -frtti)
+file(GLOB_RECURSE cpp_src ${SOURCE_DIR}/*.cpp)
+file(GLOB_RECURSE c_src ${SOURCE_DIR}/*.c)
 
-file(GLOB_RECURSE cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE c_src ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
+add_library(${COMPILE_ID} SHARED ${cpp_src} ${c_src})
 
-# IMPORTANT: QPM's generated extern.cmake hardcodes target_* calls against
-# the mod's qpm.json "info.id" (here: "qavatarsrevived", lowercase) -- NOT
-# CMake's PROJECT_NAME/"QavatarsRevived". Keep this in sync with qpm.json's
-# info.id if that ever changes.
-set(MOD_TARGET_NAME qavatarsrevived)
+target_include_directories(${COMPILE_ID} PRIVATE ${SOURCE_DIR})
+target_include_directories(${COMPILE_ID} PRIVATE ${INCLUDE_DIR})
+target_include_directories(${COMPILE_ID} PUBLIC ${SHARED_DIR})
 
-add_library(${MOD_TARGET_NAME} SHARED ${cpp_src} ${c_src})
-set_target_properties(${MOD_TARGET_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+target_link_libraries(${COMPILE_ID} PRIVATE -llog)
 
-target_include_directories(${MOD_TARGET_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/shared
-)
-
-# QPM auto-generates these two files at `qpm restore` time and MUST be
-# included after add_library() creates the target above.
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qpm_defines.cmake)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/qpm_defines.cmake)
-endif()
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern.cmake)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/extern.cmake)
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes)
-    target_include_directories(${MOD_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes)
-endif()
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs)
-    target_link_directories(${MOD_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs)
-endif()
+# QPM-generated: configures every dependency's include paths (including
+# bs-cordl's nested include/ subfolder) and link libraries. Must come after
+# add_library() creates the ${COMPILE_ID} target above.
+include(extern.cmake)
 
 # kaleb's asset-embedding CMake module (from extern/, once `qpm restore` has
 # run) turns files under assets/ (currently just the mToon shader bundle)
 # into a linkable static lib exposing them via include/assets.hpp.
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extern/includes/kaleb/shared/cmake/assets.cmake)
     include(${CMAKE_CURRENT_SOURCE_DIR}/extern/includes/kaleb/shared/cmake/assets.cmake)
-    add_assets(assets_${PROJECT_NAME} STATIC ${CMAKE_CURRENT_SOURCE_DIR}/assets ${CMAKE_CURRENT_SOURCE_DIR}/include/assets.hpp)
-    target_link_libraries(${MOD_TARGET_NAME} PRIVATE assets_${PROJECT_NAME})
+    add_assets(assets_${COMPILE_ID} STATIC ${CMAKE_CURRENT_SOURCE_DIR}/assets ${CMAKE_CURRENT_SOURCE_DIR}/include/assets.hpp)
+    target_link_libraries(${COMPILE_ID} PRIVATE assets_${COMPILE_ID})
 endif()
-
-target_link_libraries(${MOD_TARGET_NAME} PRIVATE log)
