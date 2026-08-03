@@ -1,13 +1,15 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Lauriethefish/QuestPatcher.QMod/main/QuestPatcher.QMod/Resources/qmod.schema.json",
   "_QPVersion": "0.1.2",
   "name": "Qavatars Revived",
   "id": "QavatarsRevived",
+  "modloader": "Scotland2",
   "author": "YOUR_NAME",
   "porter": "",
-  "version": "0.1.0",
+  "version": "${version}",
   "packageId": "com.beatgames.beatsaber",
-  "packageVersion": "1.40.8",
-  "description": "Custom avatar (VRM) support for Beat Saber, rebuilt from scratch for 1.40.8. ${mod.description}",
+  "packageVersion": "1.40.8_7379",
+  "description": "Custom avatar (VRM) support for Beat Saber, rebuilt from scratch for 1.40.8.",
   "coverImage": "cover.png",
   "dependencies": [
     {
@@ -26,9 +28,8 @@
       "downloadIfMissing": "https://github.com/Fernthedev/paperlog/releases/download/v4.6.4/paper2_scotland2.qmod"
     }
   ],
-  "modFiles": [
-    "libqavatarsrevived.so"
-  ],
+  "modFiles": [],
+  "lateModFiles": ["${binary}"],
   "libraryFiles": [],
   "fileCopies": [],
   "copyExtensions": []
