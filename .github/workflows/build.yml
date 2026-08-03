@@ -61,16 +61,6 @@ jobs:
       - name: Build
         run: cmake --build build
 
-      - name: Debug - find libil2cpp and check if linked
-        if: failure()
-        run: |
-          echo "--- does libil2cpp have a linkable .so anywhere? ---"
-          find extern -iname "*il2cpp*.so" 2>&1
-          find / -iname "libil2cpp.so" 2>/dev/null | head -5
-          echo "--- extern/includes/libil2cpp structure ---"
-          ls -la extern/includes/libil2cpp 2>&1
-          readlink -f extern/includes/libil2cpp 2>&1
-
       - name: Build qmod package
         run: qpm qmod build
 
