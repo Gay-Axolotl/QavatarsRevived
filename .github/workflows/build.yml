@@ -66,6 +66,13 @@ jobs:
           echo "--- line 19 specifically ---"
           sed -n '15,25p' qpm.shared.json
 
+      - name: Debug - dump qpm.shared.json
+        run: |
+          echo "--- qpm.shared.json content (lines 1-30) ---"
+          sed -n '1,30p' qpm.shared.json
+          echo "--- mod.template.json content ---"
+          cat mod.template.json
+
       - name: Build qmod package
         run: qpm qmod manifest
 
