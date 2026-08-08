@@ -59,6 +59,13 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      - name: Debug - inspect qpm.shared.json
+        run: |
+          echo "--- full qpm.shared.json ---"
+          cat qpm.shared.json
+          echo "--- line 19 specifically ---"
+          sed -n '15,25p' qpm.shared.json
+
       - name: Build qmod package
         run: qpm qmod manifest
 
