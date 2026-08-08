@@ -41,47 +41,45 @@ built" below.
 - [ ] Replay-mode support
 - [ ] Testing on-device — **nothing in this repo has been built or run yet**
 
-## Current build status (paused, needs fresh eyes)
+## Current build status
 
-CI now gets through **all C++ compilation successfully** -- every source
-file compiles clean (warnings only). The build fails at the **link** step
-with `undefined hidden symbol` errors for a handful of `bs-cordl` codegen
-methods actually used in the code, e.g.:
+**The `.so` compiles and links successfully as of this pass.** The multi-session
+linker mystery (`undefined hidden symbol` for `Transform::SetParent` etc.) is
+resolved -- confirmed by diffing against a real, working, confirmed-1.40.8 mod's
+actual `CMakeLists.txt` (`hardcpp/QBeatSaberPlus-GameTweaker`). The fix was:
+`project(${COMPILE_ID})` sourced from `qpm_defines.cmake` (included as line 1,
+before `project()`), `-fdeclspec -fvisibility=hidden` compile options, and
+`UNITY_2021` / `CORDL_RUNTIME_FIELD_NULL_CHECKS` compile definitions -- none of
+which were in this project's original CMakeLists.txt. `bs-cordl`'s qpm.json
+entry is back to plain `"additionalData": {}`, matching the reference exactly.
 
-- `UnityEngine::Transform::SetParent`
-- `UnityEngine::Transform::set_localPosition` / `set_localRotation` / etc.
-- `UnityEngine::Mesh::IndexFormat::UInt16` / `UInt32`
+**Remaining, non-blocking issue:** `qpm qmod manifest` (the current, non-deprecated
+packaging command) fails with `missing field 'version'` when deserializing
+`qpm.shared.json` -- happens regardless of `mod.template.json` content. The
+older, deprecated `qpm qmod build` also fails, but with a different error:
+`Value for key 'author' was requested, but wasn't set!` -- doesn't match any
+difference found between this project's `mod.template.json` and the working
+reference's. Neither has been root-caused; this only affects producing the
+final packaged `.qmod` file, not the compiled mod code itself. Worth a focused
+session against qpm CLI's actual source/issue tracker rather than more guessing.
 
-**What's confirmed so far:**
-- `bs-cordl`'s `qpm.json` entry needs `"additionalData": {"headersOnly": true, "compileOptions": {"includePaths": ["include"]}}`
-  -- without this, `UnityEngine/*.hpp` includes fail to resolve at all
-  (the package resolves to `extern/includes/bs-cordl/include/UnityEngine/...`,
-  one level deeper than the blanket `extern/includes` path covers).
-- Reverting that to plain `{}` (matching a real, confirmed-1.40.8-shipped
-  mod's `qpm.json`, `hardcpp/QBeatSaberPlus-GameTweaker`) breaks compilation
-  entirely -- so that mod must resolve bs-cordl's include path some other
-  way not visible in its `qpm.json` alone (possibly its own custom
-  `build.ps1` script, not plain `cmake --build`).
-- `libil2cpp` has **no linkable `.so` anywhere** on the CI runner --
-  confirmed via filesystem search -- so this isn't a missing
-  `target_link_libraries` fix.
-- Adding `HAS_CODEGEN` / `NEED_UNSAFE_CSHARP` / `-fdeclspec` compile
-  definitions (a documented requirement for *Sombrero*, a different
-  dependency) made no difference to this specific linker error -- confirmed
-  by direct A/B comparison of the undefined-symbol list with and without
-  those flags. Not the cause; don't re-try this without new evidence.
-- `nm` on the actual compiled `modelImporter.cpp.o` shows these symbols as
-  **completely absent** (not just undefined-but-referenced) -- the inline
-  method bodies in `bs-cordl`'s `zzzz__Transform_impl.hpp` aren't being
-  emitted into our object files at all, despite that header being
-  unconditionally included (no `#if`/`__has_include` guard was found
-  gating it).
+## VRIK / full-body IK -- scope found, not yet started
 
-**Best next step:** find `QBeatSaberPlus-GameTweaker`'s actual
-`CMakeLists.txt` / `build.ps1` (not just its `qpm.json`) and diff against
-ours -- that's the one piece of a confirmed-working reference we haven't
-been able to see yet. Web search wasn't surfacing that file's raw content
-during this session.
+Turns out to be much bigger than initially assumed: **not** a thin wrapper
+around a Unity plugin, but a **full custom reimplementation of RootMotion's
+FinalIK VRIK solver** in the original mod -- ~28 files covering spine, arm,
+leg, footstep, and locomotion solvers, virtual bone math, quaternion/vector3
+utility classes, all under `include(src)/customTypes/FinalIK/`. Built using
+`chatplex-sdk-bs`'s IL2CPP inheritance macros (`CP_SDK_IL2CPP_INHERIT` etc.),
+which this project deliberately doesn't depend on (see the UI section above).
+
+This is a substantially bigger undertaking than any subsystem ported so far
+and needs its own dedicated planning pass: likely either (a) porting the
+math-heavy solver files close to verbatim (pure C++, framework-agnostic) while
+reworking only the thin `custom-types`-registration shell around `VRIK`/
+`TargetManager` themselves, or (b) something scoped smaller first. Not
+started -- next session should begin by reading the full solver file set
+before deciding an approach, the same way `avatarGenerator.cpp` was handled.
 
 ## How this is being built
 
