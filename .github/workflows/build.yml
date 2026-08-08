@@ -66,12 +66,14 @@ jobs:
           echo "--- line 19 specifically ---"
           sed -n '15,25p' qpm.shared.json
 
-      - name: Debug - dump qpm.shared.json
+      - name: Debug - qpm version and full backtrace
         run: |
-          echo "--- qpm.shared.json content (lines 1-30) ---"
-          sed -n '1,30p' qpm.shared.json
-          echo "--- mod.template.json content ---"
-          cat mod.template.json
+          echo "--- qpm version ---"
+          qpm --version
+          echo "--- full qpm.shared.json ---"
+          cat qpm.shared.json
+          echo "--- full backtrace attempt ---"
+          RUST_BACKTRACE=full qpm qmod manifest || true
 
       - name: Build qmod package
         run: qpm qmod manifest
