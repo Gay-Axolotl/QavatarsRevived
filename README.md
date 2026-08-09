@@ -1,3 +1,6 @@
+# !!DISCLAIMER!!
+# !!THIS BEAT SABER MOD IS MADE PURELY WITH AI!!
+
 # Qavatars Revived
 
 Custom VRM avatar support for Beat Saber Quest, targeting **1.40.8**.
